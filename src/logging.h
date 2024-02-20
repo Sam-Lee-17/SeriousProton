@@ -4,15 +4,23 @@
 #include <SFML/System.hpp>
 #include <SFML/Graphics/Rect.hpp>
 #include "stringImproved.h"
-
-#define LOG(LEVEL) Logging(LOGLEVEL_ ## LEVEL, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#if defined(_MSC_VER)
+#define LOG(LEVEL, ...) Logging(LOGLEVEL_ ## LEVEL, __FILE__, __LINE__, __FUNCTION__ , ##__VA_ARGS__)
+#else
+#define LOG(LEVEL, ...) Logging(LOGLEVEL_ ## LEVEL, __FILE__, __LINE__, __PRETTY_FUNCTION__ , ##__VA_ARGS__)
+#endif
 
 enum ELogLevel
 {
-    LOGLEVEL_DEBUG,
+    LOGLEVEL_DEBUG = 0,
     LOGLEVEL_INFO,
     LOGLEVEL_WARNING,
-    LOGLEVEL_ERROR
+    LOGLEVEL_ERROR,
+
+    LOGLEVEL_Debug = 0,
+    LOGLEVEL_Info,
+    LOGLEVEL_Warning,
+    LOGLEVEL_Error
 };
 
 class Logging : sf::NonCopyable
@@ -21,7 +29,13 @@ class Logging : sf::NonCopyable
     static FILE* log_stream;
     bool do_logging;
 public:
-    Logging(ELogLevel level, string file, int line, string function_name);
+    Logging(ELogLevel level, std::string_view file, int line, std::string_view function_name);
+    template<typename... ARGS>
+    Logging(ELogLevel level, std::string_view file, int line, std::string_view function_name, const ARGS&... args)
+    : Logging(level, file, line, function_name)
+    {
+        ((*this << args), ...);
+    }
     ~Logging();
     
     static void setLogLevel(ELogLevel level);
